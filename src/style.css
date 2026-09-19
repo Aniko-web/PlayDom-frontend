@@ -2158,6 +2158,288 @@ button {
   border: 2px solid var(--bg-surface, #0f1629);
 }
 
+/* ==========================================================================
+   Page Transitions: View Transitions API & Smooth Multi-Directional Entrances
+   ========================================================================== */
+
+/* Shared Element View Transition for Hero Banner (3.0s Cinematic Speed) */
+::view-transition-group(hero-banner-shared) {
+  animation-duration: 3.0s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+}
+
+::view-transition-old(hero-banner-shared) {
+  animation: heroOldFade 3.0s cubic-bezier(0.16, 1, 0.3, 1) both;
+  object-fit: cover;
+}
+
+::view-transition-new(hero-banner-shared) {
+  animation: heroNewFade 3.0s cubic-bezier(0.16, 1, 0.3, 1) both;
+  object-fit: cover;
+}
+
+@keyframes heroOldFade {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes heroNewFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ==========================================================================
+   Banner Left Dark Shading & Title/CTA Exit: 2 soniyada chap tomonga birga kirib ketsin
+   ========================================================================== */
+.banner-morph-leaving-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  animation: bannerLayerSlideOutLeft 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  will-change: transform, opacity;
+}
+
+.banner-morph-leaving-dark-overlay {
+  position: absolute;
+  inset: 0;
+  background: 
+    linear-gradient(90deg, rgba(8, 11, 20, 0.92) 0%, rgba(8, 11, 20, 0.55) 45%, transparent 75%),
+    linear-gradient(0deg, rgba(8, 11, 20, 0.75) 0%, transparent 40%);
+  pointer-events: none;
+}
+
+.banner-morph-leaving-content {
+  position: absolute;
+  bottom: 3rem;
+  left: 3rem;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.carousel-slide-overlay.is-leaving {
+  animation: bannerLayerSlideOutLeft 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  will-change: transform, opacity;
+}
+
+.carousel-content-box.is-leaving {
+  animation: bannerLayerSlideOutLeft 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  will-change: transform, opacity;
+}
+
+@keyframes bannerLayerSlideOutLeft {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  30% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(-100%, 0, 0);
+    opacity: 0;
+  }
+}
+
+/* ==========================================================================
+   3 Soniyali Multi-Directional Entrance Keyframes (Paydo bo'lish)
+   ========================================================================== */
+@keyframes sectionFromTopSlow {
+  0% {
+    opacity: 0;
+    transform: translateY(-60px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sectionFromLeftSlow {
+  0% {
+    opacity: 0;
+    transform: translate3d(-100px, 0, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes sectionFromRightSlow {
+  0% {
+    opacity: 0;
+    transform: translate3d(110px, 0, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes sectionFromBottomSlow {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 100px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* ==========================================================================
+   MODE 1: Entrance from Banner Click (.anim-entry-banner)
+   - Banner kichrayish orqali o'tishi (3 soniya)
+   - Barcha bo'limlar 3 soniya tezlikda turli tomonlardan paydo bo'lishi
+   ========================================================================== */
+
+/* Hero Banner Card: 3 soniyada asta-sekin kichrayish orqali o'tish */
+.anim-entry-banner .game-detail-hero-card {
+  animation: bannerMorphShrinkSlow 3.0s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: top center;
+  will-change: transform, opacity;
+}
+
+@keyframes bannerMorphShrinkSlow {
+  0% {
+    transform: scale(1.30) translateY(-42px);
+    opacity: 0.85;
+    filter: brightness(1.08);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+.anim-entry-banner .hero-banner-cover-img {
+  animation: bannerCoverZoomOutSlow 3.0s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform;
+}
+
+@keyframes bannerCoverZoomOutSlow {
+  0% {
+    transform: scale(1.28);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Hero Info Bar: Sokin 2.4s davomida 0.5s kechikish bilan chiqadi */
+.anim-entry-banner .hero-banner-info-bar {
+  animation: bannerInfoBarFadeUpSlow 2.4s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+  will-change: transform, opacity;
+}
+
+@keyframes bannerInfoBarFadeUpSlow {
+  0% {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 1. Top Back Navigation: TEPADAN 3 soniyali tezlikda paydo bo'ladi */
+.anim-entry-banner .detail-top-nav,
+.anim-entry-card .detail-top-nav {
+  animation: sectionFromTopSlow 2.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+  will-change: transform, opacity;
+}
+
+/* 2. Step 1 (User ID Account): CHAP TOMONDAN 3 soniyali tezlikda paydo bo'ladi */
+.anim-entry-banner .step-card-user-id,
+.anim-entry-card .step-card-user-id {
+  animation: sectionFromLeftSlow 2.9s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+  will-change: transform, opacity;
+}
+
+/* 3. Right Sidebar (Buyurtmani tasdiqlash): O'NG TOMONDAN 3 soniyali tezlikda paydo bo'ladi */
+.anim-entry-banner .order-sidebar-column,
+.anim-entry-card .order-sidebar-column {
+  animation: sectionFromRightSlow 2.9s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both;
+  will-change: transform, opacity;
+}
+
+/* 4. Step 2 (Packages selection): PASTDAN 3 soniyali tezlikda paydo bo'ladi */
+.anim-entry-banner .step-card-packages,
+.anim-entry-card .step-card-packages {
+  animation: sectionFromBottomSlow 3.0s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both;
+  will-change: transform, opacity;
+}
+
+/* 5. Bottom Info & FAQ: PASTDAN 3 soniyali tezlikda paydo bo'ladi */
+.anim-entry-banner .game-detail-about-section,
+.anim-entry-banner .game-detail-faq-section,
+.anim-entry-card .game-detail-about-section,
+.anim-entry-card .game-detail-faq-section {
+  animation: sectionFromBottomSlow 3.0s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both;
+  will-change: transform, opacity;
+}
+
+/* ==========================================================================
+   MODE 2: Entrance from Game Card Click (.anim-entry-card)
+   - Barcha bo'limlar 3 soniya animatsiya tezligida turli tomonlardan paydo bo'ladi
+   ========================================================================== */
+
+/* Hero Card: glides from TOP-LEFT */
+.anim-entry-card .game-detail-hero-card {
+  animation: heroFromTopLeftSlow 2.9s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+  will-change: transform, opacity;
+}
+
+@keyframes heroFromTopLeftSlow {
+  0% {
+    opacity: 0;
+    transform: translate3d(-90px, -45px, 0) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+/* Respect user's reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .banner-morph-leaving-content,
+  .carousel-content-box.is-leaving,
+  .anim-entry-banner .game-detail-hero-card,
+  .anim-entry-banner .hero-banner-cover-img,
+  .anim-entry-banner .hero-banner-info-bar,
+  .anim-entry-banner .detail-top-nav,
+  .anim-entry-banner .step-card-user-id,
+  .anim-entry-banner .step-card-packages,
+  .anim-entry-banner .game-detail-about-section,
+  .anim-entry-banner .game-detail-faq-section,
+  .anim-entry-banner .order-sidebar-column,
+  .anim-entry-card .detail-top-nav,
+  .anim-entry-card .game-detail-hero-card,
+  .anim-entry-card .step-card-user-id,
+  .anim-entry-card .step-card-packages,
+  .anim-entry-card .game-detail-about-section,
+  .anim-entry-card .game-detail-faq-section,
+  .anim-entry-card .order-sidebar-column {
+    animation-duration: 0.15s !important;
+    animation-delay: 0s !important;
+    transform: none !important;
+  }
+}
+
 /* Game Detail Page Wrapper */
 .game-detail-wrapper {
   padding-bottom: 6.5rem;

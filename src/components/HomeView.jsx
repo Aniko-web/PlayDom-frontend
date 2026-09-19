@@ -43,9 +43,27 @@ export default function HomeView({ onSelectGame, searchQuery, onSearchChange, cu
     setCurrentSlide(prev => (prev - 1 + BANNER_SLIDES.length) % BANNER_SLIDES.length);
   };
 
+  const [leavingSlideId, setLeavingSlideId] = useState(null);
+
   const handleNextSlide = (e) => {
     e.stopPropagation();
     setCurrentSlide(prev => (prev + 1) % BANNER_SLIDES.length);
+  };
+
+  const handleBannerSelect = (slideId) => {
+    setLeavingSlideId(slideId);
+    const carouselEl = document.querySelector('.carousel-banner-wrapper');
+    if (carouselEl) {
+      const rect = carouselEl.getBoundingClientRect();
+      window.__lastBannerRect = {
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height,
+        timestamp: Date.now()
+      };
+    }
+    onSelectGame(slideId, 'banner');
   };
 
   const localizedGames = GAMES.map(g => getLocalizedGame(g, currentLang));
@@ -81,19 +99,19 @@ export default function HomeView({ onSelectGame, searchQuery, onSearchChange, cu
                 key={slide.id}
                 className="carousel-slide-item"
                 style={{ backgroundImage: `url(${slide.image})` }}
-                onClick={() => onSelectGame(slide.id)}
+                onClick={() => handleBannerSelect(slide.id)}
               >
-                <div className="carousel-slide-overlay"></div>
+                <div className={`carousel-slide-overlay ${leavingSlideId === slide.id ? 'is-leaving' : ''}`}></div>
 
                 {/* Slide Text Content */}
-                <div className="carousel-content-box">
+                <div className={`carousel-content-box ${leavingSlideId === slide.id ? 'is-leaving' : ''}`}>
                   <h2 className="carousel-game-title">{slide.title}</h2>
                   <button 
                     type="button" 
                     className="carousel-cta-btn"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onSelectGame(slide.id);
+                      handleBannerSelect(slide.id);
                     }}
                   >
                     <span>{t.home.buyNow}</span>
@@ -167,7 +185,7 @@ export default function HomeView({ onSelectGame, searchQuery, onSearchChange, cu
                 className={`poster-card ${isAvailable ? 'interactive' : 'disabled'}`}
                 onClick={() => {
                   if (isAvailable) {
-                    onSelectGame(game.id);
+                    onSelectGame(game.id, 'card');
                   }
                 }}
               >

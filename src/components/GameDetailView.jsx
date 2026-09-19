@@ -16,9 +16,86 @@ export default function GameDetailView({
   onOpenGuide,
   onSubmitOrder,
   currentLang = 'uz',
-  onChangeLang
+  onChangeLang,
+  transitionSource = 'card'
 }) {
   const t = getT(currentLang);
+  const heroCardRef = React.useRef(null);
+
+  // Shared banner view-transition management (auto-cleans after transition finishes)
+  const [activeSharedBanner, setActiveSharedBanner] = useState(transitionSource === 'banner');
+  const [showLeavingBannerContent, setShowLeavingBannerContent] = useState(transitionSource === 'banner');
+
+  useEffect(() => {
+    if (activeSharedBanner) {
+      const timer = setTimeout(() => {
+        setActiveSharedBanner(false);
+      }, 3300);
+      return () => clearTimeout(timer);
+    }
+  }, [activeSharedBanner]);
+
+  useEffect(() => {
+    if (showLeavingBannerContent) {
+      const timer = setTimeout(() => {
+        setShowLeavingBannerContent(false);
+      }, 2100);
+      return () => clearTimeout(timer);
+    }
+  }, [showLeavingBannerContent]);
+
+  // Direct FLIP shrink animation from the home carousel banner to the detail hero card
+  React.useLayoutEffect(() => {
+    if (transitionSource === 'banner' && window.__lastBannerRect && heroCardRef.current) {
+      const startRect = window.__lastBannerRect;
+      const isFresh = Date.now() - (startRect.timestamp || 0) < 4500;
+
+      if (isFresh) {
+        const targetRect = heroCardRef.current.getBoundingClientRect();
+        if (targetRect.width > 0 && targetRect.height > 0) {
+          const scaleX = startRect.width / targetRect.width;
+          const scaleY = startRect.height / targetRect.height;
+          const deltaX = startRect.left - targetRect.left;
+          const deltaY = startRect.top - targetRect.top;
+
+          // Align initial state to the exact dimensions and position of the home carousel banner
+          heroCardRef.current.style.transformOrigin = 'top left';
+          heroCardRef.current.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0) scale(${scaleX}, ${scaleY})`;
+          heroCardRef.current.style.transition = 'none';
+          heroCardRef.current.style.zIndex = '35';
+          heroCardRef.current.style.boxShadow = '0 25px 60px -15px rgba(0, 0, 0, 0.7)';
+
+          // Force reflow
+          void heroCardRef.current.offsetHeight;
+
+          // Smoothly & slowly shrink down into State 2 over 3.0s
+          const raf = requestAnimationFrame(() => {
+            if (heroCardRef.current) {
+              heroCardRef.current.style.transition = 'transform 3.0s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 3.0s cubic-bezier(0.16, 1, 0.3, 1)';
+              heroCardRef.current.style.transform = 'translate3d(0, 0, 0) scale(1, 1)';
+              heroCardRef.current.style.boxShadow = '';
+            }
+          });
+
+          const timer = setTimeout(() => {
+            if (heroCardRef.current) {
+              heroCardRef.current.style.transform = '';
+              heroCardRef.current.style.transformOrigin = '';
+              heroCardRef.current.style.transition = '';
+              heroCardRef.current.style.zIndex = '';
+              heroCardRef.current.style.boxShadow = '';
+            }
+            window.__lastBannerRect = null;
+          }, 3300);
+
+          return () => {
+            cancelAnimationFrame(raf);
+            clearTimeout(timer);
+          };
+        }
+      }
+    }
+  }, [transitionSource]);
   // Empty by default - server ham id ham kiritilmagunicha chiqarilmaydi
   const [userId, setUserId] = useState('');
   const [serverId, setServerId] = useState('');
@@ -284,7 +361,7 @@ export default function GameDetailView({
   const isFormValid = userId.trim().length >= 4 && (!game.hasServerId || serverId.trim().length >= 3) && !!selectedPackage;
 
   return (
-    <div className="game-detail-wrapper">
+    <div className={`game-detail-wrapper anim-entry-${transitionSource}`}>
       <div className="container">
         
         {/* Top Back Navigation */}
@@ -302,7 +379,11 @@ export default function GameDetailView({
           <div className="order-steps-column">
             
             {/* HERO BANNER CARD (playdom.uz authentic design) */}
-            <div className="game-detail-hero-card">
+            <div 
+              ref={heroCardRef}
+              className="game-detail-hero-card"
+              style={activeSharedBanner ? { viewTransitionName: 'hero-banner-shared' } : undefined}
+            >
               <div className="hero-banner-image-container">
                 <img 
                   src={game.detailBanner || game.image} 
@@ -310,6 +391,19 @@ export default function GameDetailView({
                   className="hero-banner-cover-img" 
                 />
                 <div className="hero-banner-overlay-gradient"></div>
+
+                {/* Exiting Home Carousel Dark Shadow & Title/CTA (Slides left together in 2 seconds) */}
+                {showLeavingBannerContent && (
+                  <div className="banner-morph-leaving-layer">
+                    <div className="banner-morph-leaving-dark-overlay"></div>
+                    <div className="banner-morph-leaving-content">
+                      <h2 className="carousel-game-title">{game.title}</h2>
+                      <div className="carousel-cta-btn">
+                        <span>{t.home?.buyNow || (currentLang === 'ru' ? 'Купить →' : 'Sotib olish →')}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="hero-banner-info-bar">
                 <img src={game.image} alt={game.title} className="hero-banner-game-icon" />

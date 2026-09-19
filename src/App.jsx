@@ -147,7 +147,11 @@ export default function App() {
   const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
   const [receiptModalOrder, setReceiptModalOrder] = useState(null);
 
-  const handleNavigate = (view, gameId = null) => {
+  // Navigation transition origin: 'banner' or 'card'
+  const [navTransitionSource, setNavTransitionSource] = useState('card');
+  const [navTransitionKey, setNavTransitionKey] = useState(0);
+
+  const performNavigation = (view, gameId = null) => {
     setCurrentView(view);
     if (gameId) {
       setSelectedGameId(gameId);
@@ -164,11 +168,58 @@ export default function App() {
       };
       window.history.pushState({}, '', pathMap[view] || '/');
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
-  const handleSelectGame = (gameId) => {
-    handleNavigate('game', gameId);
+  const handleNavigate = (view, gameId = null) => {
+    if (document.startViewTransition) {
+      document.startViewTransition(() => performNavigation(view, gameId));
+    } else {
+      performNavigation(view, gameId);
+    }
+  };
+
+  const handleSelectGame = (gameId, source = 'card') => {
+    setNavTransitionSource(source);
+    setNavTransitionKey(prev => prev + 1);
+
+    if (source === 'banner') {
+      const carouselEl = document.querySelector('.carousel-banner-wrapper');
+      if (carouselEl && !window.__lastBannerRect) {
+        const rect = carouselEl.getBoundingClientRect();
+        window.__lastBannerRect = {
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          height: rect.height,
+          timestamp: Date.now()
+        };
+      }
+      if (carouselEl && document.startViewTransition) {
+        carouselEl.style.viewTransitionName = 'hero-banner-shared';
+      }
+      if (document.startViewTransition) {
+        const transition = document.startViewTransition(() => {
+          performNavigation('game', gameId);
+        });
+        transition.finished.finally(() => {
+          if (carouselEl) {
+            carouselEl.style.viewTransitionName = '';
+          }
+        });
+      } else {
+        performNavigation('game', gameId);
+      }
+    } else {
+      window.__lastBannerRect = null;
+      if (document.startViewTransition) {
+        document.startViewTransition(() => {
+          performNavigation('game', gameId);
+        });
+      } else {
+        performNavigation('game', gameId);
+      }
+    }
   };
 
   // Top-up deposit
@@ -241,8 +292,13 @@ export default function App() {
 
         {currentView === 'game' && (
           <GameDetailView
+            key={`${selectedGameId}-${navTransitionSource}-${navTransitionKey}`}
             game={selectedGame}
-            onBack={() => handleNavigate('home')}
+            transitionSource={navTransitionSource}
+            onBack={() => {
+              setNavTransitionSource('card');
+              handleNavigate('home');
+            }}
             balance={balance}
             onOpenTopup={() => {
               if (!currentUser) {
