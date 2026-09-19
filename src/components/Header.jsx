@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Plus, Sun, Moon, Wallet, User, LogOut } from 'lucide-react';
+import { Play, Plus, Sun, Moon, Wallet, User, LogOut, LogIn } from 'lucide-react';
 import { formatMoney } from '../services/api';
 import { getT } from '../i18n/translations';
 
@@ -32,11 +32,9 @@ export default function Header({
   onChangeLang,
   theme,
   onToggleTheme,
-  user = {
-    name: 'Aniko',
-    email: 'anikosanuno@gmail.com',
-    avatarLetter: 'A'
-  }
+  user,
+  onOpenAuth,
+  onLogout
 }) {
   const t = getT(currentLang);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -115,118 +113,133 @@ export default function Header({
             {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
           </button>
 
-          {/* Balance Widget Pill (👛 0 so'm | +) */}
-          <div className="user-balance-widget" title={t.nav.walletBalance}>
-            <Wallet className="balance-wallet-icon" size={17} />
-            <span className="balance-digit">{formatMoney(balance, t.currency)}</span>
-            <span className="balance-divider" />
-            <button 
-              type="button" 
-              className="btn-topup-trigger" 
-              onClick={onOpenTopup}
-              title={t.nav.topupShort}
-            >
-              <Plus size={16} strokeWidth={2.5} />
-            </button>
-          </div>
-
-          {/* User Profile Avatar with Dropdown Menu */}
-          <div className="profile-menu-container" ref={profileMenuRef}>
-            <button 
-              type="button" 
-              className={`profile-avatar-btn ${isProfileMenuOpen ? 'active' : ''}`} 
-              title={`${user.name} (${user.email})`}
-              onClick={() => setIsProfileMenuOpen(prev => !prev)}
-              aria-expanded={isProfileMenuOpen}
-              aria-haspopup="true"
-            >
-              <span>{user.avatarLetter || user.name.charAt(0).toUpperCase()}</span>
-            </button>
-
-            {/* Profile Dropdown Card */}
-            {isProfileMenuOpen && (
-              <div className="profile-dropdown-card" role="menu">
-                {/* 1. User Info Header */}
-                <div className="dropdown-user-header">
-                  <h4 className="dropdown-user-name">{user.name}</h4>
-                  <span className="dropdown-user-email">{user.email}</span>
-                </div>
-
-                {/* 2. Balance & Topup Row */}
-                <div className="dropdown-balance-section">
-                  <div className="dropdown-balance-info">
-                    <span className="dropdown-balance-label">{t.nav.balance}</span>
-                    <strong className="dropdown-balance-amount">{formatMoney(balance, t.currency)}</strong>
-                  </div>
-                  <button 
-                    type="button" 
-                    className="dropdown-btn-topup"
-                    onClick={() => {
-                      setIsProfileMenuOpen(false);
-                      onOpenTopup();
-                    }}
-                  >
-                    <Plus size={14} strokeWidth={2.5} />
-                    <span>{t.nav.topUp}</span>
-                  </button>
-                </div>
-
-                {/* 3. Navigation Links List */}
-                <div className="dropdown-menu-links">
-                  <button 
-                    type="button" 
-                    className="dropdown-menu-link"
-                    onClick={() => {
-                      setIsProfileMenuOpen(false);
-                      onNavigate('profile');
-                    }}
-                  >
-                    <User size={18} className="dropdown-link-icon" />
-                    <span>{t.nav.profile}</span>
-                  </button>
-
-                  <button 
-                    type="button" 
-                    className="dropdown-menu-link"
-                    onClick={() => {
-                      setIsProfileMenuOpen(false);
-                      onNavigate('orders');
-                    }}
-                  >
-                    <ReceiptDollarIcon size={18} className="dropdown-link-icon" />
-                    <span>{t.nav.myOrders}</span>
-                  </button>
-
-                  <button 
-                    type="button" 
-                    className="dropdown-menu-link"
-                    onClick={() => {
-                      setIsProfileMenuOpen(false);
-                      onNavigate('payments');
-                    }}
-                  >
-                    <Wallet size={18} className="dropdown-link-icon" />
-                    <span>{t.nav.myPayments}</span>
-                  </button>
-                </div>
-
-                {/* 4. Logout Option */}
-                <div className="dropdown-logout-section">
-                  <button 
-                    type="button" 
-                    className="dropdown-menu-link dropdown-link-logout"
-                    onClick={() => {
-                      setIsProfileMenuOpen(false);
-                      onNavigate('home');
-                    }}
-                  >
-                    <LogOut size={18} className="dropdown-link-icon" />
-                    <span>{t.nav.logout}</span>
-                  </button>
-                </div>
+          {/* If user is logged in: show balance & profile menu */}
+          {user ? (
+            <>
+              {/* Balance Widget Pill (👛 0 so'm | +) */}
+              <div className="user-balance-widget" title={t.nav.walletBalance}>
+                <Wallet className="balance-wallet-icon" size={17} />
+                <span className="balance-digit">{formatMoney(balance, t.currency)}</span>
+                <span className="balance-divider" />
+                <button 
+                  type="button" 
+                  className="btn-topup-trigger" 
+                  onClick={onOpenTopup}
+                  title={t.nav.topupShort}
+                >
+                  <Plus size={16} strokeWidth={2.5} />
+                </button>
               </div>
-            )}
-          </div>
+
+              {/* User Profile Avatar with Dropdown Menu */}
+              <div className="profile-menu-container" ref={profileMenuRef}>
+                <button 
+                  type="button" 
+                  className={`profile-avatar-btn ${isProfileMenuOpen ? 'active' : ''}`} 
+                  title={`${user.name} (${user.email})`}
+                  onClick={() => setIsProfileMenuOpen(prev => !prev)}
+                  aria-expanded={isProfileMenuOpen}
+                  aria-haspopup="true"
+                >
+                  <span>{user.avatarLetter || (user.name ? user.name.charAt(0).toUpperCase() : 'A')}</span>
+                </button>
+
+                {/* Profile Dropdown Card */}
+                {isProfileMenuOpen && (
+                  <div className="profile-dropdown-card" role="menu">
+                    {/* 1. User Info Header */}
+                    <div className="dropdown-user-header">
+                      <h4 className="dropdown-user-name">{user.name}</h4>
+                      <span className="dropdown-user-email">{user.email}</span>
+                    </div>
+
+                    {/* 2. Balance & Topup Row */}
+                    <div className="dropdown-balance-section">
+                      <div className="dropdown-balance-info">
+                        <span className="dropdown-balance-label">{t.nav.balance}</span>
+                        <strong className="dropdown-balance-amount">{formatMoney(balance, t.currency)}</strong>
+                      </div>
+                      <button 
+                        type="button" 
+                        className="dropdown-btn-topup"
+                        onClick={() => {
+                          setIsProfileMenuOpen(false);
+                          onOpenTopup();
+                        }}
+                      >
+                        <Plus size={14} strokeWidth={2.5} />
+                        <span>{t.nav.topUp}</span>
+                      </button>
+                    </div>
+
+                    {/* 3. Navigation Links List */}
+                    <div className="dropdown-menu-links">
+                      <button 
+                        type="button" 
+                        className="dropdown-menu-link"
+                        onClick={() => {
+                          setIsProfileMenuOpen(false);
+                          onNavigate('profile');
+                        }}
+                      >
+                        <User size={18} className="dropdown-link-icon" />
+                        <span>{t.nav.profile}</span>
+                      </button>
+
+                      <button 
+                        type="button" 
+                        className="dropdown-menu-link"
+                        onClick={() => {
+                          setIsProfileMenuOpen(false);
+                          onNavigate('orders');
+                        }}
+                      >
+                        <ReceiptDollarIcon size={18} className="dropdown-link-icon" />
+                        <span>{t.nav.myOrders}</span>
+                      </button>
+
+                      <button 
+                        type="button" 
+                        className="dropdown-menu-link"
+                        onClick={() => {
+                          setIsProfileMenuOpen(false);
+                          onNavigate('payments');
+                        }}
+                      >
+                        <Wallet size={18} className="dropdown-link-icon" />
+                        <span>{t.nav.myPayments}</span>
+                      </button>
+                    </div>
+
+                    {/* 4. Logout Option */}
+                    <div className="dropdown-logout-section">
+                      <button 
+                        type="button" 
+                        className="dropdown-menu-link dropdown-link-logout"
+                        onClick={() => {
+                          setIsProfileMenuOpen(false);
+                          if (onLogout) onLogout();
+                        }}
+                      >
+                        <LogOut size={18} className="dropdown-link-icon" />
+                        <span>{t.nav.logout}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            /* If not logged in: show Kirish (Log In) button matching PlayDom */
+            <button 
+              type="button" 
+              className="btn-header-login"
+              onClick={onOpenAuth}
+            >
+              <LogIn size={15} />
+              <span>{t.auth?.signIn || 'Kirish'}</span>
+            </button>
+          )}
         </div>
 
       </div>

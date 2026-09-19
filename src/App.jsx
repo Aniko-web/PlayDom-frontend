@@ -8,6 +8,7 @@ import FaqView from './components/FaqView';
 import ProfileView from './components/ProfileView';
 import Footer from './components/Footer';
 import BottomNav from './components/BottomNav';
+import AuthModal from './components/AuthModal';
 import { IdGuideModal, OrderReceiptModal, TopupModal } from './components/Modals';
 import { GAMES, INITIAL_ORDERS } from './data/games';
 import { getLocalizedGame, getT } from './i18n/translations';
@@ -29,6 +30,12 @@ function parseRoute(pathname) {
   }
   if (clean === 'faq') {
     return { view: 'faq', gameId: null };
+  }
+  if (clean === 'login' || clean === 'kirish') {
+    return { view: 'home', gameId: null, openAuth: 'login' };
+  }
+  if (clean === 'register' || clean === 'signup' || clean === 'ro-yxatdan-o-tish') {
+    return { view: 'home', gameId: null, openAuth: 'register' };
   }
 
   // Check if matches game slug or id
@@ -61,6 +68,44 @@ export default function App() {
     return localStorage.getItem('playdom_lang') || 'uz';
   });
 
+  // User auth state
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('playdom_user');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    // Default active user matching screenshot
+    return {
+      name: 'Aniko',
+      email: 'anikosanuno@gmail.com',
+      avatarLetter: 'A'
+    };
+  });
+
+  // Auth modal state
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(!!initialRoute.openAuth);
+  const [authModalTab, setAuthModalTab] = useState(initialRoute.openAuth || 'login');
+
+  const handleOpenAuth = (tab = 'login') => {
+    setAuthModalTab(tab);
+    setIsAuthModalOpen(true);
+  };
+
+  const handleAuthSuccess = (userData) => {
+    setCurrentUser(userData);
+    localStorage.setItem('playdom_user', JSON.stringify(userData));
+    if (userData.balance !== undefined) {
+      setBalance(userData.balance);
+    }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('playdom_user');
+  };
+
   const handleLangChange = (newLang) => {
     setCurrentLang(newLang);
     localStorage.setItem('playdom_lang', newLang);
@@ -83,6 +128,10 @@ export default function App() {
       setCurrentView(route.view);
       if (route.gameId) {
         setSelectedGameId(route.gameId);
+      }
+      if (route.openAuth) {
+        setAuthModalTab(route.openAuth);
+        setIsAuthModalOpen(true);
       }
     };
     window.addEventListener('popstate', onPopState);
@@ -163,11 +212,20 @@ export default function App() {
         <Header
           onNavigate={handleNavigate}
           balance={balance}
-          onOpenTopup={() => setIsTopupModalOpen(true)}
+          onOpenTopup={() => {
+            if (!currentUser) {
+              handleOpenAuth('login');
+            } else {
+              setIsTopupModalOpen(true);
+            }
+          }}
           currentLang={currentLang}
           onChangeLang={handleLangChange}
           theme={theme}
           onToggleTheme={handleToggleTheme}
+          user={currentUser}
+          onOpenAuth={() => handleOpenAuth('login')}
+          onLogout={handleLogout}
         />
 
       {/* Main Viewport */}
@@ -186,7 +244,13 @@ export default function App() {
             game={selectedGame}
             onBack={() => handleNavigate('home')}
             balance={balance}
-            onOpenTopup={() => setIsTopupModalOpen(true)}
+            onOpenTopup={() => {
+              if (!currentUser) {
+                handleOpenAuth('login');
+              } else {
+                setIsTopupModalOpen(true);
+              }
+            }}
             onOpenGuide={() => setIsGuideModalOpen(true)}
             onSubmitOrder={handleSubmitOrder}
             currentLang={currentLang}
@@ -220,13 +284,22 @@ export default function App() {
         {currentView === 'profile' && (
           <ProfileView
             balance={balance}
-            onOpenTopup={() => setIsTopupModalOpen(true)}
+            onOpenTopup={() => {
+              if (!currentUser) {
+                handleOpenAuth('login');
+              } else {
+                setIsTopupModalOpen(true);
+              }
+            }}
             ordersCount={orders.length}
             onNavigate={handleNavigate}
             theme={theme}
             onToggleTheme={handleToggleTheme}
             currentLang={currentLang}
             onChangeLang={handleLangChange}
+            user={currentUser}
+            onOpenAuth={handleOpenAuth}
+            onLogout={handleLogout}
           />
         )}
       </main>
@@ -266,6 +339,15 @@ export default function App() {
         onClose={() => setIsTopupModalOpen(false)}
         onDeposit={handleDeposit}
         currentLang={currentLang}
+      />
+
+      {/* Auth Modal (Login / Sign Up) */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        initialTab={authModalTab}
+        currentLang={currentLang}
+        onAuthSuccess={handleAuthSuccess}
       />
     </div>
   </>
