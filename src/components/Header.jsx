@@ -1,7 +1,28 @@
-import React from 'react';
-import { Play, Plus, Sun, Moon, Wallet } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Play, Plus, Sun, Moon, Wallet, User, LogOut } from 'lucide-react';
 import { formatMoney } from '../services/api';
 import { getT } from '../i18n/translations';
+
+// Exact ticket/receipt with dollar sign icon matching user screenshot
+function ReceiptDollarIcon({ size = 18, className = "" }) {
+  return (
+    <svg 
+      width={size} 
+      height={size} 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      className={className}
+    >
+      <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
+      <path d="M15 8h-4a1.5 1.5 0 0 0 0 3h2a1.5 1.5 0 0 1 0 3H9" />
+      <path d="M12 6.5v11" />
+    </svg>
+  );
+}
 
 export default function Header({
   onNavigate,
@@ -10,9 +31,38 @@ export default function Header({
   currentLang,
   onChangeLang,
   theme,
-  onToggleTheme
+  onToggleTheme,
+  user = {
+    name: 'Aniko',
+    email: 'anikosanuno@gmail.com',
+    avatarLetter: 'A'
+  }
 }) {
   const t = getT(currentLang);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef(null);
+
+  // Close dropdown on click outside or ESC key
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setIsProfileMenuOpen(false);
+      }
+    }
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        setIsProfileMenuOpen(false);
+      }
+    }
+    if (isProfileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isProfileMenuOpen]);
 
   return (
     <header className="site-header">
@@ -80,15 +130,103 @@ export default function Header({
             </button>
           </div>
 
-          {/* User Profile Avatar Circle (A) */}
-          <button 
-            type="button" 
-            className="profile-avatar-btn" 
-            title="Alijon S. (Mening profilim)"
-            onClick={() => onNavigate('profile')}
-          >
-            <span>A</span>
-          </button>
+          {/* User Profile Avatar with Dropdown Menu */}
+          <div className="profile-menu-container" ref={profileMenuRef}>
+            <button 
+              type="button" 
+              className={`profile-avatar-btn ${isProfileMenuOpen ? 'active' : ''}`} 
+              title={`${user.name} (${user.email})`}
+              onClick={() => setIsProfileMenuOpen(prev => !prev)}
+              aria-expanded={isProfileMenuOpen}
+              aria-haspopup="true"
+            >
+              <span>{user.avatarLetter || user.name.charAt(0).toUpperCase()}</span>
+            </button>
+
+            {/* Profile Dropdown Card */}
+            {isProfileMenuOpen && (
+              <div className="profile-dropdown-card" role="menu">
+                {/* 1. User Info Header */}
+                <div className="dropdown-user-header">
+                  <h4 className="dropdown-user-name">{user.name}</h4>
+                  <span className="dropdown-user-email">{user.email}</span>
+                </div>
+
+                {/* 2. Balance & Topup Row */}
+                <div className="dropdown-balance-section">
+                  <div className="dropdown-balance-info">
+                    <span className="dropdown-balance-label">{t.nav.balance}</span>
+                    <strong className="dropdown-balance-amount">{formatMoney(balance, t.currency)}</strong>
+                  </div>
+                  <button 
+                    type="button" 
+                    className="dropdown-btn-topup"
+                    onClick={() => {
+                      setIsProfileMenuOpen(false);
+                      onOpenTopup();
+                    }}
+                  >
+                    <Plus size={14} strokeWidth={2.5} />
+                    <span>{t.nav.topUp}</span>
+                  </button>
+                </div>
+
+                {/* 3. Navigation Links List */}
+                <div className="dropdown-menu-links">
+                  <button 
+                    type="button" 
+                    className="dropdown-menu-link"
+                    onClick={() => {
+                      setIsProfileMenuOpen(false);
+                      onNavigate('profile');
+                    }}
+                  >
+                    <User size={18} className="dropdown-link-icon" />
+                    <span>{t.nav.profile}</span>
+                  </button>
+
+                  <button 
+                    type="button" 
+                    className="dropdown-menu-link"
+                    onClick={() => {
+                      setIsProfileMenuOpen(false);
+                      onNavigate('orders');
+                    }}
+                  >
+                    <ReceiptDollarIcon size={18} className="dropdown-link-icon" />
+                    <span>{t.nav.myOrders}</span>
+                  </button>
+
+                  <button 
+                    type="button" 
+                    className="dropdown-menu-link"
+                    onClick={() => {
+                      setIsProfileMenuOpen(false);
+                      onNavigate('payments');
+                    }}
+                  >
+                    <Wallet size={18} className="dropdown-link-icon" />
+                    <span>{t.nav.myPayments}</span>
+                  </button>
+                </div>
+
+                {/* 4. Logout Option */}
+                <div className="dropdown-logout-section">
+                  <button 
+                    type="button" 
+                    className="dropdown-menu-link dropdown-link-logout"
+                    onClick={() => {
+                      setIsProfileMenuOpen(false);
+                      onNavigate('home');
+                    }}
+                  >
+                    <LogOut size={18} className="dropdown-link-icon" />
+                    <span>{t.nav.logout}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
       </div>

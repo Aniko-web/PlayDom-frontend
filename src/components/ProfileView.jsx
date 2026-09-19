@@ -30,8 +30,8 @@ export default function ProfileView({
                 <span className="profile-status-pill">{t.profile.activeUser}</span>
                 <span className="profile-id-pill">ID: #PD-984210</span>
               </div>
-              <h1 className="profile-user-name">Alijon Sattorqulov</h1>
-              <p className="profile-user-phone">+998 90 ••• •• 45</p>
+              <h1 className="profile-user-name">Aniko</h1>
+              <p className="profile-user-phone">anikosanuno@gmail.com</p>
             </div>
           </div>
 

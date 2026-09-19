@@ -14,7 +14,12 @@ export const TRANSLATIONS = {
       walletBalance: "Hamyon balansi",
       lightMode: "Kungi rejimga o'tish (Light Mode)",
       darkMode: "Tungi rejimga o'tish (Dark Mode)",
-      topupShort: "+ To'ldirish"
+      topupShort: "+ To'ldirish",
+      balance: "Balans",
+      myOrders: "Buyurtmalarim",
+      myPayments: "To'lovlarim",
+      topUp: "To'ldirish",
+      logout: "Chiqish"
     },
     home: {
       allGames: "Barcha o'yinlar",
@@ -199,7 +204,12 @@ export const TRANSLATIONS = {
       walletBalance: "Баланс кошелька",
       lightMode: "Переключить на светлую тему (Light Mode)",
       darkMode: "Переключить на темную тему (Dark Mode)",
-      topupShort: "+ Пополнить"
+      topupShort: "+ Пополнить",
+      balance: "Баланс",
+      myOrders: "Мои заказы",
+      myPayments: "Мои платежи",
+      topUp: "Пополнить",
+      logout: "Выйти"
     },
     home: {
       allGames: "Все игры",
